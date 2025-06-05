@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Crédito - Amortización Francesa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#1d4ed8',
+                        accent: '#0ea5e9',
+                        dark: '#1e293b',
+                        light: '#f8fafc'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        .card {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card:hover {
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-card {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .table-row:hover {
+            background-color: #f1f5f9;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .input-field:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-dark mb-2">Calculadora de Crédito</h1>
+            <p class="text-gray-600 max-w-2xl mx-auto">Calcula tu préstamo con amortización francesa y simula abonos extraordinarios para reducir el plazo de tu crédito</p>
+        </header>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Form Section -->
+            <div class="lg:col-span-1">
+                <div class="card bg-white rounded-xl p-6">
+                    <h2 class="text-xl font-semibold text-dark mb-6">Datos del Crédito</h2>
+                    
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block text-gray-700 mb-2 font-medium">Monto del préstamo (COP)</label>
+                            <input type="number" id="loanAmount" class="input-field w-full p-3 border border-gray-300 rounded-lg focus:border-primary" placeholder="20,000,000" value="20000000">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 mb-2 font-medium">Plazo (meses)</label>
+                            <input type="number" id="loanTerm" class="input-field w-full p-3 border border-gray-300 rounded-lg focus:border-primary" placeholder="60" value="60">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 mb-2 font-medium">Tasa de interés anual (%)</label>
+                            <input type="number" id="interestRate" class="input-field w-full p-3 border border-gray-300 rounded-lg focus:border-primary" placeholder="11" step="0.01" value="11">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-gray-700 mb-2 font-medium">Seguro mensual (COP)</label>
+                            <input type="number" id="insurance" class="input-field w-full p-3 border border-gray-300 rounded-lg focus:border-primary" placeholder="40,000" value="40000">
+                        </div>
+                        
+                        <div class="pt-4">
+                            <button id="calculateBtn" class="w-full bg-primary hover:bg-secondary text-white font-semibold py-3 px-4 rounded-lg transition duration-300">
+                                Calcular Plan de Pagos
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Extra Payments -->
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <h2 class="text-xl font-semibold text-dark mb-6">Abonos Extraordinarios</h2>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-gray-700 mb-2 font-medium">Mes para abono extraordinario</label>
+                                <input type="number" id="extraPaymentMonth" class="input-field w-full p-3 border border-gray-300 rounded-lg focus:border-primary" placeholder="Ej: 12">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-700 mb-2 font-medium">Monto del abono (COP)</label>
+                                <input type="number" id="extraPaymentAmount" class="input-field w-full p-3 border border-gray-300 rounded-lg focus:border-primary" placeholder="Ej: 500,000">
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3 pt-2">
+                                <button id="addExtraPaymentBtn" class="bg-accent hover:bg-blue-500 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+                                    Aplicar Abono
+                                </button>
+                                
+                                <button id="clearExtraPaymentsBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition duration-300">
+                                    Limpiar Abonos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Summary Card -->
+                <div id="summaryCard" class="card bg-white rounded-xl p-6 mt-6 hidden">
+                    <h2 class="text-xl font-semibold text-dark mb-4">Resumen del Crédito</h2>
+                    
+                    <div class="space-y-4">
+                        <div class="flex justify-between border-b pb-3">
+                            <span class="text-gray-600">Cuota sin seguro:</span>
+                            <span id="summaryWithoutInsurance" class="font-semibold text-dark">-</span>
+                        </div>
+                        
+                        <div class="flex justify-between border-b pb-3">
+                            <span class="text-gray-600">Cuota con seguro:</span>
+                            <span id="summaryWithInsurance" class="font-semibold text-dark">-</span>
+                        </div>
+                        
+                        <div class="flex justify-between border-b pb-3">
+                            <span class="text-gray-600">Total a pagar:</span>
+                            <span id="summaryTotalPayment" class="font-semibold text-dark">-</span>
+                        </div>
+                        
+                        <div class="flex justify-between border-b pb-3">
+                            <span class="text-gray-600">Total intereses:</span>
+                            <span id="summaryTotalInterest" class="font-semibold text-dark">-</span>
+                        </div>
+                        
+                        <div class="flex justify-between border-b pb-3">
+                            <span class="text-gray-600">Total seguros:</span>
+                            <span id="summaryTotalInsurance" class="font-semibold text-dark">-</span>
+                        </div>
+                        
+                        <div class="flex justify-between pt-2">
+                            <span class="text-gray-600">Plazo final:</span>
+                            <span id="summaryFinalTerm" class="font-semibold text-primary">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Results Section -->
+            <div class="lg:col-span-2">
+                <div id="resultsSection" class="hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-dark">Plan de Pagos</h2>
+                        <button id="downloadBtn" class="flex items-center bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition duration-300">
+                            <i class="fas fa-download mr-2"></i> Exportar CSV
+                        </button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white rounded-xl overflow-hidden">
+                            <thead class="bg-primary text-white">
+                                <tr>
+                                    <th class="py-3 px-4 text-left">Mes</th>
+                                    <th class="py-3 px-4 text-right">Cuota Total</th>
+                                    <th class="py-3 px-4 text-right">Capital</th>
+                                    <th class="py-3 px-4 text-right">Interés</th>
+                                    <th class="py-3 px-4 text-right">Seguro</th>
+                                    <th class="py-3 px-4 text-right">Abono Extra</th>
+                                    <th class="py-3 px-4 text-right">Saldo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="amortizationTable" class="divide-y divide-gray-200">
+                                <!-- Table rows will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-6 text-center">
+                        <div class="inline-flex rounded-md shadow-sm" role="group">
+                            <button id="prevBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-l-lg hover:bg-gray-100">
+                                <i class="fas fa-arrow-left mr-2"></i>Anterior
+                            </button>
+                            <button id="nextBtn" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-r-md hover:bg-gray-100">
+                                Siguiente<i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                        <div class="mt-2 text-gray-600 text-sm">
+                            Mostrando <span id="currentPage">1</span> de <span id="totalPages">1</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Extra Payments List -->
+                    <div class="mt-8">
+                        <h3 class="text-lg font-semibold text-dark mb-4">Abonos Extraordinarios Aplicados</h3>
+                        <div id="extraPaymentsList" class="bg-gray-50 rounded-lg p-4 min-h-[100px]">
+                            <!-- Extra payments will be listed here -->
+                            <p class="text-gray-500 text-center py-4">No se han aplicado abonos extraordinarios</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Empty State -->
+                <div id="emptyState" class="flex flex-col items-center justify-center py-20 text-center">
+                    <div class="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16 flex items-center justify-center mb-4">
+                        <i class="fas fa-calculator text-gray-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">Calcula tu plan de pagos</h3>
+                    <p class="text-gray-500 max-w-md">
+                        Ingresa los detalles de tu préstamo y haz clic en "Calcular Plan de Pagos" para ver la amortización completa.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        const state = {
+            loanAmount: 20000000,
+            loanTerm: 60,
+            interestRate: 11,
+            insurance: 40000,
+            extraPayments: [],
+            amortizationSchedule: [],
+            currentPage: 1,
+            itemsPerPage: 12
+        };
+
+        // DOM Elements
+        const elements = {
+            loanAmount: document.getElementById('loanAmount'),
+            loanTerm: document.getElementById('loanTerm'),
+            interestRate: document.getElementById('interestRate'),
+            insurance: document.getElementById('insurance'),
+            calculateBtn: document.getElementById('calculateBtn'),
+            extraPaymentMonth: document.getElementById('extraPaymentMonth'),
+            extraPaymentAmount: document.getElementById('extraPaymentAmount'),
+            addExtraPaymentBtn: document.getElementById('addExtraPaymentBtn'),
+            clearExtraPaymentsBtn: document.getElementById('clearExtraPaymentsBtn'),
+            resultsSection: document.getElementById('resultsSection'),
+            emptyState: document.getElementById('emptyState'),
+            amortizationTable: document.getElementById('amortizationTable'),
+            summaryCard: document.getElementById('summaryCard'),
+            summaryWithoutInsurance: document.getElementById('summaryWithoutInsurance'),
+            summaryWithInsurance: document.getElementById('summaryWithInsurance'),
+            summaryTotalPayment: document.getElementById('summaryTotalPayment'),
+            summaryTotalInterest: document.getElementById('summaryTotalInterest'),
+            summaryTotalInsurance: document.getElementById('summaryTotalInsurance'),
+            summaryFinalTerm: document.getElementById('summaryFinalTerm'),
+            extraPaymentsList: document.getElementById('extraPaymentsList'),
+            prevBtn: document.getElementById('prevBtn'),
+            nextBtn: document.getElementById('nextBtn'),
+            currentPage: document.getElementById('currentPage'),
+            totalPages: document.getElementById('totalPages'),
+            downloadBtn: document.getElementById('downloadBtn')
+        };
+
+        // Initialize the application
+        function init() {
+            // Event listeners
+            elements.calculateBtn.addEventListener('click', calculateAmortization);
+            elements.addExtraPaymentBtn.addEventListener('click', addExtraPayment);
+            elements.clearExtraPaymentsBtn.addEventListener('click', clearExtraPayments);
+            elements.prevBtn.addEventListener('click', () => changePage(-1));
+            elements.nextBtn.addEventListener('click', () => changePage(1));
+            elements.downloadBtn.addEventListener('click', exportToCSV);
+            
+            // Set initial values from inputs
+            state.loanAmount = parseFloat(elements.loanAmount.value) || 0;
+            state.loanTerm = parseInt(elements.loanTerm.value) || 0;
+            state.interestRate = parseFloat(elements.interestRate.value) || 0;
+            state.insurance = parseFloat(elements.insurance.value) || 0;
+        }
+
+        // Calculate monthly payment using French amortization
+        function calculateMonthlyPayment(principal, monthlyRate, term) {
+            if (monthlyRate === 0) {
+                return principal / term;
+            }
+            return principal * monthlyRate / (1 - Math.pow(1 + monthlyRate, -term));
+        }
+
+        // Generate amortization schedule
+        function generateAmortizationSchedule() {
+            const monthlyRate = Math.pow(1 + state.interestRate / 100, 1/12) - 1;
+            const monthlyPayment = calculateMonthlyPayment(state.loanAmount, monthlyRate, state.loanTerm);
+            let balance = state.loanAmount;
+            let schedule = [];
+            let extraPaymentsMap = new Map();
+            
+            // Create a map for extra payments
+            state.extraPayments.forEach(payment => {
+                if (extraPaymentsMap.has(payment.month)) {
+                    extraPaymentsMap.set(payment.month, extraPaymentsMap.get(payment.month) + payment.amount);
+                } else {
+                    extraPaymentsMap.set(payment.month, payment.amount);
+                }
+            });
+            
+            let month = 1;
+            let totalInterest = 0;
+            let actualTerm = state.loanTerm;
+            
+            while (balance > 0 && month <= state.loanTerm * 2) {
+                const interest = balance * monthlyRate;
+                let principalPayment = monthlyPayment - interest;
+                let extraPayment = 0;
+                
+                // Apply extra payment if it exists for this month
+                if (extraPaymentsMap.has(month)) {
+                    extraPayment = Math.min(extraPaymentsMap.get(month), balance - principalPayment);
+                }
+                
+                // Adjust principal payment if balance is low
+                if (principalPayment > balance) {
+                    principalPayment = balance;
+                }
+                
+                // Update balance
+                balance -= principalPayment + extraPayment;
+                
+                // If balance becomes negative, adjust extra payment
+                if (balance < 0) {
+                    extraPayment += balance;
+                    balance = 0;
+                }
+                
+                totalInterest += interest;
+                
+                schedule.push({
+                    month: month,
+                    payment: monthlyPayment + state.insurance,
+                    principal: principalPayment,
+                    interest: interest,
+                    insurance: state.insurance,
+                    extra: extraPayment,
+                    balance: balance
+                });
+                
+                // Break if balance is paid off
+                if (balance <= 0) {
+                    actualTerm = month;
+                    break;
+                }
+                
+                month++;
+            }
+            
+            return { schedule, actualTerm, totalInterest };
+        }
+
+        // Calculate and display amortization schedule
+        function calculateAmortization() {
+            // Validate inputs
+            if (!validateInputs()) return;
+            
+            // Update state with current inputs
+            state.loanAmount = parseFloat(elements.loanAmount.value);
+            state.loanTerm = parseInt(elements.loanTerm.value);
+            state.interestRate = parseFloat(elements.interestRate.value);
+            state.insurance = parseFloat(elements.insurance.value);
+            
+            // Generate schedule
+            const { schedule, actualTerm, totalInterest } = generateAmortizationSchedule();
+            state.amortizationSchedule = schedule;
+            
+            // Display results
+            displayResults(schedule, actualTerm, totalInterest);
+            
+            // Show results section
+            elements.resultsSection.classList.remove('hidden');
+            elements.emptyState.classList.add('hidden');
+            elements.summaryCard.classList.remove('hidden');
+            
+            // Reset pagination
+            state.currentPage = 1;
+            updatePagination();
+        }
+
+        // Display results in table
+        function displayResults(schedule, actualTerm, totalInterest) {
+            // Clear table
+            elements.amortizationTable.innerHTML = '';
+            
+            // Display summary
+            const monthlyPayment = schedule.length > 0 ? schedule[0].payment - state.insurance : 0;
+            const totalPayment = schedule.reduce((sum, item) => sum + item.payment + item.extra, 0);
+            const totalInsurance = schedule.reduce((sum, item) => sum + item.insurance, 0);
+            
+            elements.summaryWithoutInsurance.textContent = formatCurrency(monthlyPayment);
+            elements.summaryWithInsurance.textContent = formatCurrency(monthlyPayment + state.insurance);
+            elements.summaryTotalPayment.textContent = formatCurrency(totalPayment);
+            elements.summaryTotalInterest.textContent = formatCurrency(totalInterest);
+            elements.summaryTotalInsurance.textContent = formatCurrency(totalInsurance);
+            elements.summaryFinalTerm.textContent = `${actualTerm} meses`;
+            
+            // Render current page
+            renderCurrentPage();
+            
+            // Render extra payments list
+            renderExtraPaymentsList();
+        }
+
+        // Render current page of amortization schedule
+        function renderCurrentPage() {
+            elements.amortizationTable.innerHTML = '';
+            
+            const startIndex = (state.currentPage - 1) * state.itemsPerPage;
+            const endIndex = Math.min(startIndex + state.itemsPerPage, state.amortizationSchedule.length);
+            
+            for (let i = startIndex; i < endIndex; i++) {
+                const item = state.amortizationSchedule[i];
+                const row = document.createElement('tr');
+                row.className = 'table-row';
+                row.innerHTML = `
+                    <td class="py-3 px-4">${item.month}</td>
+                    <td class="py-3 px-4 text-right">${formatCurrency(item.payment)}</td>
+                    <td class="py-3 px-4 text-right">${formatCurrency(item.principal)}</td>
+                    <td class="py-3 px-4 text-right">${formatCurrency(item.interest)}</td>
+                    <td class="py-3 px-4 text-right">${formatCurrency(item.insurance)}</td>
+                    <td class="py-3 px-4 text-right ${item.extra > 0 ? 'text-green-600 font-medium' : ''}">
+                        ${item.extra > 0 ? formatCurrency(item.extra) : '-'}
+                    </td>
+                    <td class="py-3 px-4 text-right">${formatCurrency(item.balance)}</td>
+                `;
+                elements.amortizationTable.appendChild(row);
+            }
+        }
+
+        // Change current page
+        function changePage(direction) {
+            const newPage = state.currentPage + direction;
+            const totalPages = Math.ceil(state.amortizationSchedule.length / state.itemsPerPage);
+            
+            if (newPage > 0 && newPage <= totalPages) {
+                state.currentPage = newPage;
+                updatePagination();
+                renderCurrentPage();
+            }
+        }
+
+        // Update pagination controls
+        function updatePagination() {
+            const totalPages = Math.ceil(state.amortizationSchedule.length / state.itemsPerPage);
+            
+            elements.currentPage.textContent = state.currentPage;
+            elements.totalPages.textContent = totalPages;
+            
+            elements.prevBtn.disabled = state.currentPage === 1;
+            elements.nextBtn.disabled = state.currentPage === totalPages;
+        }
+
+        // Add extra payment
+        function addExtraPayment() {
+            const month = parseInt(elements.extraPaymentMonth.value);
+            const amount = parseFloat(elements.extraPaymentAmount.value);
+            
+            if (!month || month < 1 || month > state.loanTerm || !amount || amount <= 0) {
+                alert('Por favor ingresa un mes válido (entre 1 y ' + state.loanTerm + ') y un monto positivo');
+                return;
+            }
+            
+            // Add to state
+            state.extraPayments.push({ month, amount });
+            
+            // Clear inputs
+            elements.extraPaymentMonth.value = '';
+            elements.extraPaymentAmount.value = '';
+            
+            // Recalculate if schedule exists
+            if (state.amortizationSchedule.length > 0) {
+                calculateAmortization();
+            }
+            
+            // Render extra payments list
+            renderExtraPaymentsList();
+        }
+
+        // Clear all extra payments
+        function clearExtraPayments() {
+            state.extraPayments = [];
+            
+            // Recalculate if schedule exists
+            if (state.amortizationSchedule.length > 0) {
+                calculateAmortization();
+            }
+            
+            // Render extra payments list
+            renderExtraPaymentsList();
+        }
+
+        // Render extra payments list
+        function renderExtraPaymentsList() {
+            if (state.extraPayments.length === 0) {
+                elements.extraPaymentsList.innerHTML = `
+                    <p class="text-gray-500 text-center py-4">No se han aplicado abonos extraordinarios</p>
+                `;
+                return;
+            }
+            
+            // Group by month
+            const paymentsByMonth = {};
+            state.extraPayments.forEach(payment => {
+                if (!paymentsByMonth[payment.month]) {
+                    paymentsByMonth[payment.month] = 0;
+                }
+                paymentsByMonth[payment.month] += payment.amount;
+            });
+            
+            // Generate HTML
+            let html = '<div class="space-y-3">';
+            Object.keys(paymentsByMonth).sort((a, b) => a - b).forEach(month => {
+                html += `
+                    <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-200">
+                        <div>
+                            <span class="font-medium">Mes ${month}</span>
+                            <span class="text-gray-500 text-sm ml-2">(Abono extraordinario)</span>
+                        </div>
+                        <div class="font-semibold text-green-600">${formatCurrency(paymentsByMonth[month])}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            elements.extraPaymentsList.innerHTML = html;
+        }
+
+        // Export to CSV
+        function exportToCSV() {
+            if (state.amortizationSchedule.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+            
+            let csvContent = "Mes,Cuota Total,Capital,Interés,Seguro,Abono Extra,Saldo\n";
+            
+            state.amortizationSchedule.forEach(item => {
+                csvContent += `${item.month},${item.payment},${item.principal},${item.interest},${item.insurance},${item.extra},${item.balance}\n`;
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `plan_pagos_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Format currency for display
+        function formatCurrency(value) {
+            if (value === 0) return '$0';
+            return '$' + value.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        // Validate inputs
+        function validateInputs() {
+            if (!elements.loanAmount.value || elements.loanAmount.value <= 0) {
+                alert('Por favor ingresa un monto de préstamo válido');
+                return false;
+            }
+            
+            if (!elements.loanTerm.value || elements.loanTerm.value <= 0) {
+                alert('Por favor ingresa un plazo válido (en meses)');
+                return false;
+            }
+            
+            if (!elements.interestRate.value || elements.interestRate.value <= 0) {
+                alert('Por favor ingresa una tasa de interés anual válida');
+                return false;
+            }
+            
+            if (!elements.insurance.value || elements.insurance.value < 0) {
+                alert('Por favor ingresa un valor de seguro válido');
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
